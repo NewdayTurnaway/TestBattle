@@ -22,6 +22,8 @@ namespace BattleScripts
 
         private void SetValue(int value)
         {
+            if (value < 0)
+                return;
             if (_value == value)
                 return;
 
