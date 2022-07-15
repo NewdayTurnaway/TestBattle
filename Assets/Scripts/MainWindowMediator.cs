@@ -60,15 +60,15 @@ namespace BattleScripts
 
         private PlayerData CreatePlayerData(DataType dataType)
         {
-            PlayerData playerData = new PlayerData(dataType);
-            playerData.Attach(_enemy);
+            PlayerData playerData = new(dataType);
+            playerData.ValueChanged += _enemy.Update;
 
             return playerData;
         }
 
         private void DisposePlayerData(ref PlayerData playerData)
         {
-            playerData.Detach(_enemy);
+            playerData.ValueChanged -= _enemy.Update;
             playerData = null;
         }
 
@@ -89,16 +89,16 @@ namespace BattleScripts
 
         private void Unsubscribe()
         {
-            _addMoneyButton.onClick.RemoveAllListeners();
-            _minusMoneyButton.onClick.RemoveAllListeners();
+            _addMoneyButton.onClick.RemoveListener(IncreaseMoney);
+            _minusMoneyButton.onClick.RemoveListener(DecreaseMoney);
 
-            _addHealthButton.onClick.RemoveAllListeners();
-            _minusHealthButton.onClick.RemoveAllListeners();
+            _addHealthButton.onClick.RemoveListener(IncreaseHealth);
+            _minusHealthButton.onClick.RemoveListener(DecreaseHealth);
 
-            _addPowerButton.onClick.RemoveAllListeners();
-            _minusPowerButton.onClick.RemoveAllListeners();
+            _addPowerButton.onClick.RemoveListener(IncreasePower);
+            _minusPowerButton.onClick.RemoveListener(DecreasePower);
 
-            _fightButton.onClick.RemoveAllListeners();
+            _fightButton.onClick.RemoveListener(Fight);
         }
 
 

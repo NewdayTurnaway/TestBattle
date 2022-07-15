@@ -1,10 +1,10 @@
-using System.Collections.Generic;
+using System;
 
 namespace BattleScripts
 {
     internal class PlayerData
     {
-        private readonly List<IEnemy> _enemies;
+        public event Action<PlayerData> ValueChanged;
         private int _value;
 
         public DataType DataType { get; }
@@ -15,23 +15,10 @@ namespace BattleScripts
             set => SetValue(value);
         }
 
-
         public PlayerData(DataType dataType)
         {
             DataType = dataType;
-            _enemies = new List<IEnemy>();
         }
-
-
-        public void Attach(IEnemy enemy) => _enemies.Add(enemy);
-        public void Detach(IEnemy enemy) => _enemies.Remove(enemy);
-
-        protected void Notify()
-        {
-            foreach (var investor in _enemies)
-                investor.Update(this);
-        }
-
 
         private void SetValue(int value)
         {
@@ -39,7 +26,7 @@ namespace BattleScripts
                 return;
 
             _value = value;
-            Notify();
+            ValueChanged?.Invoke(this);
         }
     }
 }
