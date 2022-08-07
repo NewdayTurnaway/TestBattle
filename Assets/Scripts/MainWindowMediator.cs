@@ -35,7 +35,7 @@ namespace BattleScripts
         [SerializeField] private Button _passButton;
         [SerializeField] private Button _fightButton;
 
-        private const int MAX_CRIME_LEVEL = 6;
+        private const int CRIME_LEVEL_LIMIT = 6;
 
         private PlayerData _money;
         private PlayerData _heath;
@@ -56,8 +56,7 @@ namespace BattleScripts
 
             Subscribe();
 
-            _passButton.gameObject.SetActive(false);
-            _fightButton.gameObject.SetActive(false);
+            ChangeFightButtons(_crimeLevel);
         }
 
         private void OnDestroy()
@@ -144,21 +143,16 @@ namespace BattleScripts
 
         private void NextCrimeLevel(PlayerData playerData)
         {
-            playerData.Value = (playerData.Value + 1) % MAX_CRIME_LEVEL;
+            playerData.Value = (playerData.Value + 1) % CRIME_LEVEL_LIMIT;
             ChangeDataWindow(playerData);
-            ChangeFightsButtons(playerData);
+            ChangeFightButtons(playerData);
         }
 
-        private void ChangeFightsButtons(PlayerData playerData)
+        private void ChangeFightButtons(PlayerData playerData)
         {
-            if (playerData.Value <= 2)
-            {
-                _passButton.gameObject.SetActive(true);
-                _fightButton.gameObject.SetActive(false);
-                return;
-            }
-            _passButton.gameObject.SetActive(false);
-            _fightButton.gameObject.SetActive(true);
+            bool canPass = playerData.Value <= 2;
+            _passButton.gameObject.SetActive(canPass);
+            _fightButton.gameObject.SetActive(!canPass);
         }
 
         private void ChangeDataWindow(PlayerData playerData)
