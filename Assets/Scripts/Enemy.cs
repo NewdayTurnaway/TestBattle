@@ -9,9 +9,9 @@ namespace BattleScripts
 
     internal class Enemy : IEnemy
     {
-        private const float KMoney = 5f;
-        private const float KPower = 1.5f;
-        private const float MaxHealthPlayer = 20;
+        private const float MONEY_COEFF = 5f;
+        private const float POWER_COEFF = 2f;
+        private const int DEFAULT_HEALTH_ENEMY = 6;
 
         private readonly string _name;
 
@@ -46,15 +46,18 @@ namespace BattleScripts
 
         public int CalcPower()
         {
-            int kHealth = CalcKHealth();
-            float moneyRatio = _moneyPlayer / KMoney;
-            float powerRatio = _powerPlayer / KPower;
+            int healthCoeff = CalcHealthCoeff();
+            float moneyRatio = _moneyPlayer / MONEY_COEFF;
+            float powerRatio = _powerPlayer / POWER_COEFF;
 
-            return (int)(moneyRatio + kHealth + powerRatio);
+            return (int)(moneyRatio + healthCoeff + powerRatio);
         }
 
-        private int CalcKHealth() =>
-            _healthPlayer > MaxHealthPlayer ? 100 : 5;
+        private int CalcHealthCoeff()
+        {
+            int coeff = (int)(0.75f * DEFAULT_HEALTH_ENEMY * (_healthPlayer / 12));
+            return DEFAULT_HEALTH_ENEMY + coeff;
+        }
     }
 }
 

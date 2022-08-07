@@ -11,6 +11,7 @@ namespace BattleScripts
         [SerializeField] private TMP_Text _countMoneyText;
         [SerializeField] private TMP_Text _countHealthText;
         [SerializeField] private TMP_Text _countPowerText;
+        [SerializeField] private TMP_Text _crimeLevelText;
 
         [Header("Enemy Stats")]
         [SerializeField] private TMP_Text _countPowerEnemyText;
@@ -26,13 +27,20 @@ namespace BattleScripts
         [Header("Power Buttons")]
         [SerializeField] private Button _addPowerButton;
         [SerializeField] private Button _minusPowerButton;
+        
+        [Header("Crime Level Button")]
+        [SerializeField] private Button _crimeLevelButton;
 
         [Header("Other Buttons")]
+        [SerializeField] private Button _passButton;
         [SerializeField] private Button _fightButton;
+
+        private const int MAX_CRIME_LEVEL = 6;
 
         private PlayerData _money;
         private PlayerData _heath;
         private PlayerData _power;
+        private PlayerData _crimeLevel;
 
         private Enemy _enemy;
 
@@ -44,8 +52,12 @@ namespace BattleScripts
             _money = CreatePlayerData(DataType.Money);
             _heath = CreatePlayerData(DataType.Health);
             _power = CreatePlayerData(DataType.Power);
+            _crimeLevel = CreatePlayerData(DataType.CrimeLevel);
 
             Subscribe();
+
+            _passButton.gameObject.SetActive(false);
+            _fightButton.gameObject.SetActive(false);
         }
 
         private void OnDestroy()
@@ -53,6 +65,7 @@ namespace BattleScripts
             DisposePlayerData(ref _money);
             DisposePlayerData(ref _heath);
             DisposePlayerData(ref _power);
+            DisposePlayerData(ref _crimeLevel);
 
             Unsubscribe();
         }
@@ -60,15 +73,15 @@ namespace BattleScripts
 
         private PlayerData CreatePlayerData(DataType dataType)
         {
-            PlayerData playerData = new PlayerData(dataType);
-            playerData.Attach(_enemy);
+            PlayerData playerData = new(dataType);
+            playerData.ValueChanged += _enemy.Update;
 
             return playerData;
         }
 
         private void DisposePlayerData(ref PlayerData playerData)
         {
-            playerData.Detach(_enemy);
+            playerData.ValueChanged -= _enemy.Update;
             playerData = null;
         }
 
@@ -84,21 +97,27 @@ namespace BattleScripts
             _addPowerButton.onClick.AddListener(IncreasePower);
             _minusPowerButton.onClick.AddListener(DecreasePower);
 
+            _crimeLevelButton.onClick.AddListener(ChangeCrimeLevel);
+
+            _passButton.onClick.AddListener(PassFight);
             _fightButton.onClick.AddListener(Fight);
         }
 
         private void Unsubscribe()
         {
-            _addMoneyButton.onClick.RemoveAllListeners();
-            _minusMoneyButton.onClick.RemoveAllListeners();
+            _addMoneyButton.onClick.RemoveListener(IncreaseMoney);
+            _minusMoneyButton.onClick.RemoveListener(DecreaseMoney);
 
-            _addHealthButton.onClick.RemoveAllListeners();
-            _minusHealthButton.onClick.RemoveAllListeners();
+            _addHealthButton.onClick.RemoveListener(IncreaseHealth);
+            _minusHealthButton.onClick.RemoveListener(DecreaseHealth);
 
-            _addPowerButton.onClick.RemoveAllListeners();
-            _minusPowerButton.onClick.RemoveAllListeners();
+            _addPowerButton.onClick.RemoveListener(IncreasePower);
+            _minusPowerButton.onClick.RemoveListener(DecreasePower);
 
-            _fightButton.onClick.RemoveAllListeners();
+            _crimeLevelButton.onClick.RemoveListener(ChangeCrimeLevel);
+
+            _passButton.onClick.RemoveListener(PassFight);
+            _fightButton.onClick.RemoveListener(Fight);
         }
 
 
@@ -110,6 +129,7 @@ namespace BattleScripts
 
         private void IncreasePower() => IncreaseValue(_power);
         private void DecreasePower() => DecreaseValue(_power);
+        
 
         private void IncreaseValue(PlayerData playerData) => AddToValue(1, playerData);
         private void DecreaseValue(PlayerData playerData) => AddToValue(-1, playerData);
@@ -120,16 +140,36 @@ namespace BattleScripts
             ChangeDataWindow(playerData);
         }
 
+        private void ChangeCrimeLevel() => NextCrimeLevel(_crimeLevel);
+
+        private void NextCrimeLevel(PlayerData playerData)
+        {
+            playerData.Value = (playerData.Value + 1) % MAX_CRIME_LEVEL;
+            ChangeDataWindow(playerData);
+            ChangeFightsButtons(playerData);
+        }
+
+        private void ChangeFightsButtons(PlayerData playerData)
+        {
+            if (playerData.Value <= 2)
+            {
+                _passButton.gameObject.SetActive(true);
+                _fightButton.gameObject.SetActive(false);
+                return;
+            }
+            _passButton.gameObject.SetActive(false);
+            _fightButton.gameObject.SetActive(true);
+        }
 
         private void ChangeDataWindow(PlayerData playerData)
         {
             int value = playerData.Value;
             DataType dataType = playerData.DataType;
             TMP_Text textComponent = GetTextComponent(dataType);
-            textComponent.text = $"Player {dataType:F} {value}";
+            textComponent.text = $"Player {dataType:F}: {value}";
 
             int enemyPower = _enemy.CalcPower();
-            _countPowerEnemyText.text = $"Enemy Power {enemyPower}";
+            _countPowerEnemyText.text = $"Enemy Power: {enemyPower}";
         }
 
         private TMP_Text GetTextComponent(DataType dataType) =>
@@ -138,6 +178,7 @@ namespace BattleScripts
                 DataType.Money => _countMoneyText,
                 DataType.Health => _countHealthText,
                 DataType.Power => _countPowerText,
+                DataType.CrimeLevel => _crimeLevelText,
                 _ => throw new ArgumentException($"Wrong {nameof(DataType)}")
             };
 
@@ -151,6 +192,11 @@ namespace BattleScripts
             string message = isVictory ? "Win" : "Lose";
 
             Debug.Log($"<color={color}>{message}!!!</color>");
+        }
+
+        private void PassFight()
+        {
+            Debug.Log($"<color=white>Pass</color>");
         }
     }
 }
